@@ -83,6 +83,18 @@ DATABASES = {
     }
 }
 
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'heroku_db',
+        'USER': 'heroku',
+        'PASSWORD': 'miren54321',
+        'HOST': 'localhost',
+        'PORT': '',
+    }
+}
+
+
 # Password validation
 # https://docs.djangoproject.com/en/1.9/ref/settings/#auth-password-validators
 
