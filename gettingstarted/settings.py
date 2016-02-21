@@ -90,7 +90,7 @@ DATABASES = {
         'USER': 'heroku',
         'PASSWORD': 'miren54321',
         'HOST': 'localhost',
-        'PORT': '',
+        'PORT': '5432',
     }
 }
 
