@@ -19,24 +19,48 @@ class HelloTest(TestCase):
         expected_html = render_to_string('index.html', request = request)
         self.assertEqual(response.content.decode(), expected_html)
 
-    def test_can_save_POST_request(self):
+    def test_home_page_can_save_a_POST_request(self):
         request = HttpRequest()
         request.method = 'POST'
         request.POST['item_text'] = 'A new list item'
 
         response = index(request)
-        # print(response.content.decode())
 
-        self.assertIn('A new list item', response.content.decode())
-        expected_html = render_to_string('index.html', {
-                       'new_item_text': 'A new list item'},
-                       request=request)
-        # print(expected_html)
-        self.assertEqual(expected_html, response.content.decode())
+        self.assertEqual(Item.objects.count(), 1)
+        new_item = Item.objects.first()
+        self.assertEqual(new_item.text, 'A new list item')
+
+    def test_home_page_redirects_after_POST(self):
+        request = HttpRequest()
+        request.method = 'POST'
+        request.POST['item_text'] = 'A new list item'
+
+        response = index(request)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['location'], '/')
+
+    def test_home_page_displays_all_list_items(self):
+        for i in range(5):
+            request = HttpRequest()
+            request.method = 'POST'
+            request.POST['item_text'] = 'item_' + str(i)
+            response = index(request)
+        request = HttpRequest()
+        response = index(request)
+
+        for item in Item.objects.all():
+            self.assertIn(item.text, response.content.decode())       
+
+    def test_home_page_only_saves_items_when_necessary(self):
+        request = HttpRequest()
+        index(request)
+        self.assertEqual(Item.objects.count(), 0)
 
 
 class ItemModelTest(TestCase):
-    def test_saving_and_retriving_items(self):
+
+    def test_saving_and_retrieving_items(self):
         first_item = Item()
         first_item.text = 'The first (ever) list item'
         first_item.save()
@@ -52,4 +76,3 @@ class ItemModelTest(TestCase):
         second_saved_item = saved_items[1]
         self.assertEqual(first_saved_item.text, 'The first (ever) list item')
         self.assertEqual(second_saved_item.text, 'Item the second')
-        
