@@ -22,11 +22,11 @@ class NewVisitorTest(LiveServerTestCase):
         self.browser.get(self.live_server_url)
 
         # She notices the page title and header mention to-do lists
-        self.assertIn('To-Do', self.browser.title)
+        self.assertIn('To-do', self.browser.title)
 
         # She is invited to enter a to-do item straight away
         header_text = self.browser.find_element_by_tag_name('h1').text
-        self.assertIn('To-Do', header_text)
+        self.assertIn('Heroku', header_text)
 
         # She is invited to enter a to-do item straight away
         inputbox = self.browser.find_element_by_id('id_new_item')
@@ -42,10 +42,8 @@ class NewVisitorTest(LiveServerTestCase):
         # and now the page lists "1: Buy peacock feathers" as an item in a
         # to-do list table
         inputbox.send_keys(Keys.ENTER)
-        self.browser.implicitly_wait(2)
         edith_list_url = self.browser.current_url
         self.assertRegex(edith_list_url, '/lists/.+')
-
         self.check_for_row_in_list_table('1: Buy peacock feathers')
 
         # There is still a text box inviting her to add another item. She
@@ -62,8 +60,8 @@ class NewVisitorTest(LiveServerTestCase):
 
         # Now a new user, Francis, comes along to the site.
 
-        ## We use a new browser session to make sure that no information
-        ## of Edith's is coming through from cookies etc #1
+        # We use a new browser session to make sure that no information
+        # of Edith's is coming through from cookies etc #1
         self.browser.quit()
         self.browser = webdriver.Firefox()
 
@@ -94,3 +92,4 @@ class NewVisitorTest(LiveServerTestCase):
 
         self.fail('Finish the test!')
         # [...rest of comments as before]
+
