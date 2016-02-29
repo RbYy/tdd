@@ -6,10 +6,6 @@ from .models import Greeting, Item
 
 # Create your views here.
 def index(request):
-    # return HttpResponse('Hello from Python!')
-    if request.method == 'POST':
-        Item.objects.create(text=request.POST['item_text'])
-        return redirect('/lists/the-only-list-in-the-world/')
     return render(request,
                   'index.html')
 
@@ -28,4 +24,8 @@ def db(request):
 
     return render(request, 'db.html', {'greetings': greetings})
 
+
+def new_list(request):
+    Item.objects.create(text=request.POST['item_text'])
+    return redirect('/lists/the-only-list-in-the-world/')
 hello = None

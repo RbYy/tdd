@@ -1,9 +1,9 @@
 from django.conf.urls import include, url
 
 from django.contrib import admin
+import hello.views
 admin.autodiscover()
 
-import hello.views
 
 # Examples:
 # url(r'^$', 'gettingstarted.views.home', name='home'),
@@ -12,6 +12,6 @@ import hello.views
 urlpatterns = [
     url(r'^$', hello.views.index, name='index'),
     url(r'^lists/the-only-list-in-the-world/$', hello.views.view_list, name='view_list'),
-    url(r'^db', hello.views.db, name='db'),
+    url(r'^lists/new/$', hello.views.new_list, name='new_list'),
     url(r'^admin/', include(admin.site.urls)),
 ]
