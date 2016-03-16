@@ -148,3 +148,8 @@ STATICFILES_DIRS = (
 # https://warehouse.python.org/project/whitenoise/
 STATICFILES_STORAGE = 'whitenoise.django.GzipManifestStaticFilesStorage'
 
+print('STATIC_ROOT: ', STATIC_ROOT)
+print('STATIC_URL: ', STATIC_URL)
+STATIC_ROOT1 = os.path.dirname(STATIC_ROOT)
+print('STATIC_ROOT1 ', STATIC_ROOT1)
+print('PROJECT_ROOT ', PROJECT_ROOT)
