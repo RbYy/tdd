@@ -26,9 +26,9 @@ def deploy(site=None):
         site = env.host
     site_folder = '/home/%s/sites/%s' % (env.user, site)
     source_folder = site_folder + '/source'
-    _create_directory_structure_if_necessary(site_folder)
+    # _create_directory_structure_if_necessary(site_folder)
     # PG_DB_SETTINGS = _create_pg_database()
-    _get_latest_source(source_folder)
+    # _get_latest_source(source_folder)
     # _update_settings(source_folder, env.host, PG_DB_SETTINGS)
     # _update_virtualenv(source_folder)
     # _update_static_files(source_folder)
@@ -125,15 +125,50 @@ def get_db():
 
 
 def set_nginx(site_folder, site_name):
+    nginx_available_folder = '/etc/nginx/sites-available'
+    nginx_enabled_folder = '/etc/nginx/sites-enabled'
+    nginx_ln_enabled = "%s/%s" % (nginx_enabled_folder, site_name)
     deploy_folder = "%s/source/deploy_tools" % (site_folder)
-    nginx_site = "%s/source/deploy_tools/nginx.site.template" % (site_folder)
-    sed(nginx_site,
-        'server_name.+$',
-        'server_name %s;' % (site_name))
-    sed(nginx_site,
-        'alias.+',
-        'alias %s/static;' % (site_folder))
-    sed(nginx_site,
-        'unix.+$',
-        'unix:/%s/myproject.sock;' % (site_folder))
-    run("mv %s %s/%s" % (nginx_site, deploy_folder, site_name))
+    nginx_site = "%s/nginx.site.template" % (deploy_folder)
+    nginx_site_renamed = "%s/%s" % (deploy_folder, site_name)
+    if not exists(nginx_site_renamed):
+        run("mv %s %s" % (nginx_site, nginx_site_renamed))
+        sed(nginx_site_renamed,
+            'server_name.+$',
+            'server_name %s;' % (site_name))
+        sed(nginx_site_renamed,
+            'alias.+',
+            'alias %s/static;' % (site_folder))
+        sed(nginx_site_renamed,
+            'unix.+$',
+            'unix:/%s/myproject.sock;' % (site_folder))
+
+    sudo("cp %s %s/%s" % (nginx_site_renamed, nginx_available_folder, site_name))
+    if exists(nginx_ln_enabled):
+        sudo("rm %s" % (nginx_ln_enabled))
+    sudo("ln -s %s/%s %s" % (nginx_available_folder,
+                             site_name,
+                             nginx_ln_enabled
+                             )
+         )
+    sudo("service nginx reload")
+
+
+def set_gunicorn(site_name, site_folder):
+    sysd_service = "/etc/systemd/system/gunicorn.{0}.service".format(site_name)
+    gunic_template = "{0}/source/deploy_tools/gunicorn.service.template".format(site_folder)
+    gunic_renamed = "{0}/source/deploy_tools/gunicorn.{1}.service".format(site_folder, site_name)
+    if not exists(gunic_renamed):
+        run("mv {0} {1}".format(gunic_template, gunic_renamed))
+        sed(gunic_renamed, "User.+$", "User={0}".format(env.user))
+        sed(gunic_renamed, "Group.+$", "Group={0}".format(env.user))
+        sed(gunic_renamed, "WorkingD.+$", "WorkingDirectory={0}/source".format(site_folder))
+        sed(gunic_renamed,
+            "ExecSta.+$",
+            "ExecStart={0}/virtualenv/bin/gunicorn \
+            --workers 3 --bind unix:{0}/myproject.sock \
+            gettingstarted.wsgi:application".format(site_folder))
+    sudo("cp {0} {1}".format(gunic_renamed, sysd_service))
+    sudo("ln -s {0} {1}".format(sysd_service,))
+    sudo("systemctl enable gunicorn.{0}.service".format(site_name))
+    sudo("systemctl start gunicorn.{0}.service".format(site_name))
