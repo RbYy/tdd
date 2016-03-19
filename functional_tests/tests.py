@@ -1,6 +1,6 @@
 import sys
 from selenium import webdriver
-import sys
+
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from selenium.webdriver.common.keys import Keys
 
