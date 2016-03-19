@@ -27,17 +27,23 @@ def deploy(site=None):
     site_folder = '/home/%s/sites/%s' % (env.user, site)
     source_folder = site_folder + '/source'
     _create_directory_structure_if_necessary(site_folder)
-    PG_DB_SETTINGS = _create_pg_database()
+    # PG_DB_SETTINGS = _create_pg_database()
     _get_latest_source(source_folder)
-    _update_settings(source_folder, env.host, PG_DB_SETTINGS)
-    _update_virtualenv(source_folder)
-    _update_static_files(source_folder)
-    _update_database(source_folder)
+    # _update_settings(source_folder, env.host, PG_DB_SETTINGS)
+    # _update_virtualenv(source_folder)
+    # _update_static_files(source_folder)
+    # _update_database(source_folder)
+    # apt_get("nginx")
+    set_nginx(site_folder, site)
 
 
 def _create_directory_structure_if_necessary(site_folder):
     for subfolder in ('database', 'static', 'virtualenv', 'source'):
         run('mkdir -p %s/%s' % (site_folder, subfolder))
+
+
+def apt_get(package):
+    sudo("apt-get -y install %s" % (package))
 
 
 def _get_latest_source(source_folder):
@@ -49,7 +55,7 @@ def _get_latest_source(source_folder):
     run('cd %s && git reset --hard %s' % (source_folder, current_commit))
 
 
-def _update_settings(source_folder, site_name):
+def _update_settings(source_folder, site_name, PG_DB_SETTINGS):
     settings_path = source_folder + '/gettingstarted/settings.py'
     requirements_path = source_folder + '/requirements.txt'
     sed(settings_path, "DEBUG = True", "DEBUG = False")
@@ -64,7 +70,7 @@ def _update_settings(source_folder, site_name):
         append(secret_key_file, "SECRET_KEY = '%s'" % (key,))
     append(settings_path, '\nfrom .secret_key import SECRET_KEY')
     append(settings_path, '\n%s' % (PG_DB_SETTINGS))
-    append(requirements_path, 'psycopg2==2.6.1')
+    append(requirements_path, 'psycopg2==2.6.1\ngunicorn==19.4.5')
 
 
 def _update_virtualenv(source_folder):
@@ -116,3 +122,18 @@ def get_pass():
 
 def get_db():
     return prompt("pg database name: ")
+
+
+def set_nginx(site_folder, site_name):
+    deploy_folder = "%s/source/deploy_tools" % (site_folder)
+    nginx_site = "%s/source/deploy_tools/nginx.site.template" % (site_folder)
+    sed(nginx_site,
+        'server_name.+$',
+        'server_name %s;' % (site_name))
+    sed(nginx_site,
+        'alias.+',
+        'alias %s/static;' % (site_folder))
+    sed(nginx_site,
+        'unix.+$',
+        'unix:/%s/myproject.sock;' % (site_folder))
+    run("mv %s %s/%s" % (nginx_site, deploy_folder, site_name))
