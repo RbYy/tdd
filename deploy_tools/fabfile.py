@@ -26,15 +26,16 @@ def deploy(site=None):
         site = env.host
     site_folder = '/home/%s/sites/%s' % (env.user, site)
     source_folder = site_folder + '/source'
-    # _create_directory_structure_if_necessary(site_folder)
-    # PG_DB_SETTINGS = _create_pg_database()
-    # _get_latest_source(source_folder)
-    # _update_settings(source_folder, env.host, PG_DB_SETTINGS)
-    # _update_virtualenv(source_folder)
-    # _update_static_files(source_folder)
-    # _update_database(source_folder)
-    # apt_get("nginx")
+    _create_directory_structure_if_necessary(site_folder)
+    PG_DB_SETTINGS = _create_pg_database()
+    _get_latest_source(source_folder)
+    _update_settings(source_folder, site, PG_DB_SETTINGS)
+    _update_virtualenv(source_folder)
+    _update_static_files(source_folder)
+    _update_database(source_folder)
+    apt_get("nginx")
     set_nginx(site_folder, site)
+    set_gunicorn(site_folder, site)
 
 
 def _create_directory_structure_if_necessary(site_folder):
@@ -100,9 +101,10 @@ def _create_pg_database():
     db_pass = get_pass()
     db_db = get_db()
     pg_db_set = PG_DB_SETTINGS % (db_db, db_user, db_pass)
-    sudo('psql -c "CREATE USER %s WITH PASSWORD E\'%s\'"' % (db_user, db_pass), user='postgres')
-    sudo('psql -c "CREATE DATABASE %s WITH OWNER %s"' % (db_db, db_user), user='postgres')
-    sudo('psql -c "ALTER ROLE %s WITH CREATEDB"' % (db_user), user='postgres')
+    sudo("systemctl enable postgresql")
+    sudo('psql -c "CREATE USER %s WITH PASSWORD E\'%s\'"' % (db_user, db_pass), user='postgres', warn_only=True)
+    sudo('psql -c "CREATE DATABASE %s WITH OWNER %s"' % (db_db, db_user), user='postgres', warn_only=True)
+    sudo('psql -c "ALTER ROLE %s WITH CREATEDB"' % (db_user), user='postgres', warn_only=True)
     return pg_db_set
 
 
@@ -141,7 +143,7 @@ def set_nginx(site_folder, site_name):
             'alias %s/static;' % (site_folder))
         sed(nginx_site_renamed,
             'unix.+$',
-            'unix:/%s/myproject.sock;' % (site_folder))
+            'unix:%s/myproject.sock;' % (site_folder))
 
     sudo("cp %s %s/%s" % (nginx_site_renamed, nginx_available_folder, site_name))
     if exists(nginx_ln_enabled):
@@ -154,7 +156,7 @@ def set_nginx(site_folder, site_name):
     sudo("service nginx reload")
 
 
-def set_gunicorn(site_name, site_folder):
+def set_gunicorn(site_folder, site_name):
     sysd_service = "/etc/systemd/system/gunicorn.{0}.service".format(site_name)
     gunic_template = "{0}/source/deploy_tools/gunicorn.service.template".format(site_folder)
     gunic_renamed = "{0}/source/deploy_tools/gunicorn.{1}.service".format(site_folder, site_name)
@@ -166,9 +168,8 @@ def set_gunicorn(site_name, site_folder):
         sed(gunic_renamed,
             "ExecSta.+$",
             "ExecStart={0}/virtualenv/bin/gunicorn \
-            --workers 3 --bind unix:{0}/myproject.sock \
-            gettingstarted.wsgi:application".format(site_folder))
+ --workers 3 --bind unix:{0}/myproject.sock \
+ gettingstarted.wsgi:application".format(site_folder))
     sudo("cp {0} {1}".format(gunic_renamed, sysd_service))
-    sudo("ln -s {0} {1}".format(sysd_service,))
     sudo("systemctl enable gunicorn.{0}.service".format(site_name))
     sudo("systemctl start gunicorn.{0}.service".format(site_name))
