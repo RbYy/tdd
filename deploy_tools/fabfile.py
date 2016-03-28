@@ -168,8 +168,8 @@ def set_gunicorn(site_folder, site_name):
         sed(gunic_renamed,
             "ExecSta.+$",
             "ExecStart={0}/virtualenv/bin/gunicorn \
- --workers 3 --bind unix:{0}/myproject.sock \
- gettingstarted.wsgi:application".format(site_folder))
+--workers 3 --bind unix:{0}/myproject.sock \
+gettingstarted.wsgi:application".format(site_folder))
     sudo("cp {0} {1}".format(gunic_renamed, sysd_service))
     sudo("systemctl enable gunicorn.{0}.service".format(site_name))
     sudo("systemctl start gunicorn.{0}.service".format(site_name))

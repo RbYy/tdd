@@ -6,10 +6,6 @@ server {
         alias /home/webdata/sites/brumatr-staging.noip.me/static;
     }
 
-#   location / {
-#       proxy_pass http://localhost:8000;
-#   }
-
     location / {
         proxy_set_header Host $host;
         proxy_pass http://unix:/home/webdata/sites/brumatr-staging.noip.me/myproject.sock;
