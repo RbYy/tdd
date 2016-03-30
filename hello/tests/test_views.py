@@ -1,3 +1,4 @@
+from hello.forms import ItemForm
 from django.core.urlresolvers import resolve
 from django.http import HttpRequest
 from django.test import TestCase
@@ -9,15 +10,14 @@ from django.utils.html import escape
 
 
 class HelloTest(TestCase):
-    def test_url_root_resolver(self):
-        found = resolve('/')
-        self.assertEqual(found.func, index)
 
-    def test_returns_correct_html(self):
-        request = HttpRequest()
-        response = index(request)
-        expected_html = render_to_string('index.html', request=request)
-        self.assertEqual(response.content.decode(), expected_html)
+    def test_home_page_renders_home_template(self):
+        response = self.client.get('/')
+        self.assertTemplateUsed(response, 'index.html')
+
+    def test_home_page_uses_item_form(self):
+        response = self.client.get('/')
+        self.assertIsInstance(response.context['form'], ItemForm)
 
 
 class ListViewTest(TestCase):

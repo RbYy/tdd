@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
+from hello.forms import ItemForm
 
 from .models import Item, List
 
@@ -8,7 +9,8 @@ from .models import Item, List
 # Create your views here.
 def index(request):
     return render(request,
-                  'index.html')
+                  'index.html',
+                  {'form': ItemForm()})
 
 
 def view_list(request, list_id):
