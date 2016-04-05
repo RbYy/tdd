@@ -128,7 +128,6 @@ class NewListTest(TestCase):
 
     def test_validation_errors_are_shown_on_home_page(self):
         response = self.client.post('/lists/new/', data={'text': ''})
-        print(response.context['form'].errors)
         self.assertContains(response, escape(EMPTY_ITEM_ERROR))
 
     def test_for_invalid_input_passes_form_to_template(self):
